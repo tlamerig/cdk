@@ -31,7 +31,7 @@ abstract class BaseDatasetCommand extends Configured implements Command {
           "HCatalog for metadata storage.")
   String directory;
 
-  @Parameter(names = {"-h", "--hcatalog"},
+  @Parameter(names = {"-h", "--hcatalog"}, arity = 1,
       description = "If true, store dataset metadata in HCatalog, " +
           "otherwise store it on the filesystem.")
   boolean hcatalog = true;
