@@ -69,7 +69,7 @@ public class CreateDatasetCommand extends BaseDatasetCommand {
       descriptorBuilder.partitionStrategy(Accessor.getDefault().fromExpression(partitionExpression));
     }
 
-    if (datasetNames.size() != 1) {
+    if (datasetNames == null || datasetNames.size() != 1) {
       throw new IllegalArgumentException("Exactly one dataset name must be specified.");
     }
     repo.create(datasetNames.get(0), descriptorBuilder.get());

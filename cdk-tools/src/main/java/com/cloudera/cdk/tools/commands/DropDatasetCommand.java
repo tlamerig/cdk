@@ -31,6 +31,10 @@ public class DropDatasetCommand extends BaseDatasetCommand {
   public int run() throws IOException {
     DatasetRepository repo = getDatasetRepository();
 
+    if (datasetNames == null) {
+      throw new IllegalArgumentException("No dataset names were specified.");
+    }
+
     for (String datasetName : datasetNames) {
       repo.drop(datasetName);
     }
