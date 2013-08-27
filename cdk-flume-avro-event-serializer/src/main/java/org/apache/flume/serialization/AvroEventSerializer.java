@@ -109,21 +109,22 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
   private void initialize(Event event) throws IOException {
     Schema schema = null;
     String schemaUrl = event.getHeaders().get(AVRO_SCHEMA_URL_HEADER);
-    if (schemaUrl != null) {
+    String schemaString = event.getHeaders().get(AVRO_SCHEMA_LITERAL_HEADER);
+    if (schemaUrl != null && schemaString != null) {
+      schema = saveToUrl(schemaUrl, schemaString);
+      schemaCache.put(schemaUrl, schema);
+    } else if (schemaUrl != null) {
       schema = schemaCache.get(schemaUrl);
       if (schema == null) {
         schema = loadFromUrl(schemaUrl);
         schemaCache.put(schemaUrl, schema);
       }
-    }
-    if (schema == null) {
-      String schemaString = event.getHeaders().get(AVRO_SCHEMA_LITERAL_HEADER);
-      if (schemaString == null) {
-        throw new FlumeException("Could not find schema for event " + event);
-      }
+    } else if (schemaString != null) {
       schema = new Schema.Parser().parse(schemaString);
+    } else {
+      throw new FlumeException("Could not find schema for event " + event);
     }
-
+        
     writer = new GenericDatumWriter<Object>(schema);
     dataFileWriter = new DataFileWriter<Object>(writer);
 
@@ -166,6 +167,27 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
       }
     }
   }
+  
+  private Schema saveToUrl(String schemaUrl, String schemaString) throws IOException {
+    Configuration conf = new Configuration();
+    Schema.Parser parser = new Schema.Parser();
+    if (schemaUrl.toLowerCase().startsWith("hdfs://")) {
+      FileSystem fs = FileSystem.get(conf);
+      FSDataOutputStream output = null;
+      try {
+        output = fs.create(new Path(schemaUrl), true);
+        output.writeBytes(schemaString);
+        return parser.parse(schemaString);
+      } finally {
+        if (output != null) {
+          output.close();
+        }
+      }
+    } else {
+      throw new IOException("Saving to url only supported for protocol hdfs://. Cannot process url: " + schemaUrl);
+    }
+  }
+  
 
   @Override
   public void flush() throws IOException {
