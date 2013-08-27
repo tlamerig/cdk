@@ -169,7 +169,9 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
 
   @Override
   public void flush() throws IOException {
-    dataFileWriter.flush();
+    if (dataFileWriter != null) {
+      dataFileWriter.flush();
+    }
   }
 
   @Override
