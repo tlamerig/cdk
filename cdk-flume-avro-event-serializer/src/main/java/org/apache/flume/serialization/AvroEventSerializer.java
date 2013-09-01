@@ -37,6 +37,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -176,18 +177,18 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
       FSDataOutputStream output = null;
       try {
         output = fs.create(new Path(schemaUrl), true);
+        Schema schema = parser.parse(schemaString);
         output.writeBytes(schemaString);
-        return parser.parse(schemaString);
+        return schema;
       } finally {
         if (output != null) {
           output.close();
         }
       }
     } else {
-      throw new IOException("Saving to url only supported for protocol hdfs://. Cannot process url: " + schemaUrl);
+      throw new IllegalArgumentException("Saving to url only supported for protocol hdfs://. Cannot process url: " + schemaUrl);
     }
   }
-  
 
   @Override
   public void flush() throws IOException {
